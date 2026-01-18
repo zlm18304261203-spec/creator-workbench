@@ -2,11 +2,13 @@
 import { GoogleGenAI } from "@google/genai";
 
 const getAIClient = () => {
-  // 安全地获取 API_KEY，防止 process 未定义导致应用崩溃
-  const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : '';
+  // 优先从 Vite 环境变量中获取，其次从 process.env 获取
+  // @ts-ignore
+  const apiKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_KEY) || 
+                 (typeof process !== 'undefined' ? process.env.API_KEY : '');
   
   if (!apiKey) {
-    console.warn("API Key not found. AI features will be disabled.");
+    console.warn("未找到 API Key。AI 功能将不可用。请在环境变量中设置 VITE_API_KEY 或 API_KEY。");
     return null;
   }
   return new GoogleGenAI({ apiKey });
@@ -23,7 +25,7 @@ export const polishContent = async (text: string): Promise<string> => {
     });
     return response.text || text;
   } catch (error) {
-    console.error("AI Polish error:", error);
+    console.error("AI 润色错误:", error);
     return text;
   }
 };
@@ -41,7 +43,7 @@ export const generateTitle = async (text: string): Promise<string[]> => {
     const lines = response.text?.split('\n').filter(line => line.trim().length > 0) || [];
     return lines.map(l => l.replace(/^\d+\.\s*/, '').replace(/^-\s*/, '').trim()).slice(0, 5);
   } catch (error) {
-    console.error("AI Title generation error:", error);
+    console.error("AI 标题生成错误:", error);
     return ["标题生成失败"];
   }
 };
@@ -57,7 +59,7 @@ export const extractOutline = async (text: string): Promise<string[]> => {
     });
     return response.text?.split('\n').filter(l => l.trim()).slice(0, 8) || [];
   } catch (error) {
-    console.error("AI Outline error:", error);
+    console.error("AI 大纲提取错误:", error);
     return [];
   }
 };
